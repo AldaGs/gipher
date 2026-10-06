@@ -46,4 +46,4 @@ The first time you export, GIPHER installs four output module templates (`Gipher
 
 ## License
 
-GIPHER is licensed under the LGPL-3.0; see [LICENSE.md](LICENSE.md). The bundled `gifski.exe` and `ffmpeg.exe` are distributed under their own licenses.
+GIPHER is licensed under the LGPL-3.0; see [LICENSE.md](LICENSE.md). The bundled `gifski.exe` and `ffmpeg.exe` are distributed under their own licenses (AGPL-3.0 and GPL-3.0). See `(AG-Extras)/licenses/` in the release zip.
