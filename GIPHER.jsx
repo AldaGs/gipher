@@ -20,7 +20,7 @@ var testOpen = createPNG ("testOpen.png", "\u0089PNG\r\n\x1A\n\x00\x00\x00\rIHDR
 
 var alertNetworkDisabled = "Network access disabled.\nTo allow, go to:\nPreferences > Scriptting and Expressions\nAnd check off\nAllow Scripts to Write Files and Access Network";
 var scriptName = "GIPHER";
-var version = "BETA-1.22b";
+var version = "1.0.0";
 var gitHubURL = "https://github.com/AldaGs/After-Effects-Scripts#after-effects-scripts";
 
 var scriptSettings = getJSONFile(File(getUserDataFolder()+ "\\" + "Settings"+ "\\" + "settings.json"));
@@ -852,11 +852,14 @@ function renderActiveComp(outputFolder,template_Name,index){
         };
     
     var base = outputFile.fsName.slice(0, -ext.length);
+    var held = holdOtherQueueItems(renderQueue,compQueue);
     try{
         renderQueue.render();
     }catch(e){
+        releaseQueueItems(held);
         return gipherError("Render failed:\n" + e.toString());
         };
+    releaseQueueItems(held);
     
     if(compQueue.status != RQItemStatus.DONE) return gipherError("Render did not finish (status: " + compQueue.status + ").\nIt may have been stopped, or After Effects reported an error. Check the Render Queue panel.");
     var rendered = (ext == ".png") ? outputFolder.getFiles(File(base).displayName + "*.png") : [File(base + ".mov")];
@@ -926,9 +929,39 @@ function getRenderItem(renderQueue,item){
     return false;
     };
 
+// Removes only items GIPHER added (their output goes to a GIPHERrender folder).
 function clearRenderQueue(queue){
     for(var i = queue.numItems; i >= 1; i--){
-        queue.item(i).remove();
+        if(isGipherItem(queue.item(i))) queue.item(i).remove();
+        };
+    };
+
+function isGipherItem(rqItem){
+    try{
+        for(var j = 1; j <= rqItem.numOutputModules; j++){
+            var file = rqItem.outputModule(j).file;
+            if(file && file.fsName.indexOf("\\GIPHERrender\\") != -1) return true;
+            };
+    }catch(e){};
+    return false;
+    };
+
+// Unchecks the user's queued items so render() only renders GIPHER's; returns them to re-check later.
+function holdOtherQueueItems(queue,keepItem){
+    var held = [];
+    for(var i = 1; i <= queue.numItems; i++){
+        var item = queue.item(i);
+        if(item != keepItem && item.status == RQItemStatus.QUEUED){
+            item.render = false;
+            held.push(item);
+            };
+        };
+    return held;
+    };
+
+function releaseQueueItems(held){
+    for(var i = 0; i < held.length; i++){
+        try{ held[i].render = true; }catch(e){};
         };
     };
 
